@@ -14,31 +14,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import part3.fourinrow.core.*
 
 private const val COLUMNS = 7
 
 private const val ROWS = 6
 
-private val WIN_YELLOW = Color(255, 128, 0)
+private val WIN_YELLOW = Color(192, 128, 0)
 private val WIN_RED = Color(192, 0, 0)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 @Preview
-fun App() {
+fun FrameWindowScope.App() {
     val board = Board(COLUMNS, ROWS)
     val colors = List(COLUMNS * ROWS) { remember { mutableStateOf(Color.Gray) } }
 
     val listener = BoardListener { turnCell ->
-        val column = turnCell.x
         val newWinningCombo = board.winningCombo()
 
         fun setColor(cell: Cell) {
-            colors[(ROWS - 1 - cell.y) * COLUMNS + column].value = when {
+            colors[(ROWS - 1 - cell.y) * COLUMNS + cell.x].value = when {
                 newWinningCombo != null && cell in newWinningCombo -> {
                     if (newWinningCombo.winner == Chip.YELLOW) WIN_YELLOW else WIN_RED
                 }
@@ -51,6 +48,7 @@ fun App() {
                 }
             }
         }
+        val column = turnCell.x
         for (row in 0 until ROWS) {
             val cell = Cell(column, row)
             setColor(cell)
@@ -65,6 +63,17 @@ fun App() {
         }
     }
     board.registerListener(listener)
+
+    MenuBar {
+        Menu("Actions") {
+            Item("Restart", onClick = {
+                board.clear()
+                for (i in 0 until COLUMNS * ROWS) {
+                    colors[i].value = Color.Gray
+                }
+            })
+        }
+    }
 
     MaterialTheme {
         LazyVerticalGrid(
